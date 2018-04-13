@@ -2,57 +2,65 @@ package main
 
 import (
 	"encoding/json"
-	//"html/template"
+	"flag"
 	"fmt"
-	"io/ioutil"
+	"html/template"
+	"log"
+	"net/http"
 	"os"
 )
 
-type CreateYourOwnAdventure struct {
-	Intro     StoryObject `json:"intro"`
-	Newyork   StoryObject `json:"new-york"`
-	Debate    StoryObject `json:"debate"`
-	SeanKelly StoryObject `json:"sean-kelly"`
-	MarkBates StoryObject `json:"mark-bates"`
-	Denver    StoryObject `json:"denver"`
+type Story map[string]Chapter
+
+type Chapter struct {
+	Title      string   `json:"title"`
+	Paragraphs []string `json:"story"`
+	Options    []Option `json:"options"`
 }
 
-type StoryObject struct {
-	Title   string       `json:"title"`
-	Story   []string     `json:"story"`
-	Options []OptionType `json:"options"`
+type Option struct {
+	Text    string `json:"text"`
+	Chapter string `json:"arc"`
 }
 
-type OptionType struct {
-	text string `json:"text"`
-	arc  string `json:"arc"`
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	p := &Chapter{
+		Title: "Welcome to Create Your Own Adventure main page",
+	}
+
+	t, _ := template.ParseFiles("template.html")
+	t.Execute(w, *p)
+}
+
+func introHandler(w http.ResponseWriter, r *http.Request, s *Chapter) {
+	t, _ := template.ParseFiles("template.html")
+	fmt.Println("this function at least fires")
+	fmt.Println(s)
+	t.Execute(w, s)
 }
 
 func main() {
-	// REQUIREMENTS
-	// Using html/template package, create HTML pages
-	// Create an http.Handler to handle web requests instead of a handler function
 
-	// 1. Import gopher.json file as go-readable format (using "encoidng/json" package)
-	raw, err := ioutil.ReadFile("gopher.json")
+	filename := flag.String("file", "gopher.json", "Importing JSON file")
+	flag.Parse()
+	fmt.Printf("Using the story in %s. \n", *filename)
+
+	f, err := os.Open(*filename)
 	if err != nil {
-		panic(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
-	var c CreateYourOwnAdventure
-	json.Unmarshal(raw, &c)
-	fmt.Println("======== JUST PRINT OUT =========")
-	fmt.Printf("%v", c)
-	fmt.Println("-------- toJson --------")
-	fmt.Println(toJson(c))
 
-}
-
-func toJson(p interface{}) string {
-	bytes, err := json.Marshal(p)
-	if err != nil {
-		//fmt.Println(err, Error())
-		os.Exit(1)
+	d := json.NewDecoder(f)
+	var story Story
+	if err := d.Decode(&story); err != nil {
+		log.Fatal(err)
 	}
-	return string(bytes)
+
+	fmt.Printf("%+v\n", story)
+
+	//http.HandleFunc("/", rootHandler)
+	//http.HandleFunc("/intro", func(w http.ResponseWriter, r *http.Request) {
+	//introHandler(w, r, &text.Intro)
+	//})
+	//log.Fatal(http.ListenAndServe(":8080", nil))
 }
