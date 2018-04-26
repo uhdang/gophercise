@@ -1,23 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/uhdang/gophercise/03_choose_your_own_adventure/mine/story"
 	"log"
 	"os"
 )
-
-type Story map[string]Chapter
-
-type Chapter struct {
-	Title     string   `json:"title"`
-	Paragraph []string `json:"story"`
-	Options   []struct {
-		Text string `json:"text"`
-		Arc  string `json:"arc"`
-	} `json:"options"`
-}
 
 func main() {
 	filename := flag.String("file", "", "input a filename you want to open")
@@ -30,31 +19,9 @@ func main() {
 	}
 	defer file.Close()
 
-	dec := json.NewDecoder(file)
+	o, err := story.DecodeStory(file)
 
-	var s Story
-	err = dec.Decode(&s)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%s", s)
-
-	// ==============================
-
-	//fileinfo, err := file.Stat()
-	//if err != nil {
-	//log.Fatal(err)
-	//}
-
-	//filesize := fileinfo.Size()
-	//buffer := make([]byte, filesize)
-
-	//bytesread, err := file.Read(buffer)
-	//if err != nil {
-	//log.Fatal(err)
-	//}
-
-	//fmt.Println("bytes read: ", bytesread)
-	//fmt.Println("bytestream to string: ", string(buffer))
+	fmt.Println(o["intro"])
+	fmt.Println(o["intro"].Title)
 
 }
